@@ -1,21 +1,9 @@
-import sys
-
-from PySide6.QtWidgets import QApplication
-
-from src.ui.desktop_pet import DesktopPet
-from src.reminder.reminder_controller import ReminderController
+from src.core.app import AquaSakhiApp
 
 
 def main():
-    app = QApplication(sys.argv)
-
-    pet = DesktopPet()
-
-    reminder = ReminderController(pet)
-
-    pet.show()
-
-    sys.exit(app.exec())
+    app = AquaSakhiApp()
+    app.run()
 
 
 if __name__ == "__main__":
