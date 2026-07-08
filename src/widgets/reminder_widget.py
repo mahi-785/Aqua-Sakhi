@@ -16,50 +16,54 @@ class ReminderWidget(QWidget):
         super().__init__()
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.Tool
+            Qt.FramelessWindowHint
+            | Qt.Tool
+            | Qt.WindowStaysOnTopHint
         )
+
+        self.setAttribute(Qt.WA_TranslucentBackground)
 
         self.setStyleSheet("""
             QWidget{
                 background:white;
-                border-radius:18px;
-                border:2px solid #BFE7FF;
+                border-radius:20px;
+                border:2px solid #A7D8F5;
             }
 
             QLabel{
-                font-size:15px;
+                font-size:16px;
+                color:#333333;
             }
 
             QPushButton{
+                background:#6EC6FF;
+                color:white;
                 border:none;
                 border-radius:10px;
                 padding:8px;
-                background:#7EC8E3;
-                color:white;
                 font-weight:bold;
             }
 
             QPushButton:hover{
-                background:#5EB8D8;
+                background:#42A5F5;
             }
         """)
 
-        text = QLabel("💧 Time to drink some water!")
+        self.message = QLabel("💧 Time to drink some water!")
 
-        drank = QPushButton("💙 I Drank Water")
-        snooze = QPushButton("😴 Snooze 10 min")
+        self.drink_button = QPushButton("💙 I Drank Water")
+        self.snooze_button = QPushButton("😴 Snooze")
 
-        drank.clicked.connect(self.drank_water.emit)
-        snooze.clicked.connect(self.snoozed.emit)
+        self.drink_button.clicked.connect(self.drank_water.emit)
+        self.snooze_button.clicked.connect(self.snoozed.emit)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(text)
+        layout.addWidget(self.message)
 
-        buttons = QHBoxLayout()
-        buttons.addWidget(drank)
-        buttons.addWidget(snooze)
+        row = QHBoxLayout()
+        row.addWidget(self.drink_button)
+        row.addWidget(self.snooze_button)
 
-        layout.addLayout(buttons)
+        layout.addLayout(row)
 
         self.adjustSize()
