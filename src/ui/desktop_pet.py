@@ -1,6 +1,6 @@
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QPropertyAnimation
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QLabel, QWidget
+from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 
 class DesktopPet(QWidget):
@@ -24,7 +24,6 @@ class DesktopPet(QWidget):
                 "Couldn't load assets/sprites/character.png"
             )
 
-        # Scale while keeping aspect ratio
         pixmap = pixmap.scaled(
             220,
             220,
@@ -37,22 +36,46 @@ class DesktopPet(QWidget):
 
         self.resize(self.label.size())
 
-        screen = self.screen().availableGeometry() if self.screen() else None
-        if screen:
-            x = screen.width() - self.width() - 40
-            y = screen.height() - self.height() - 40
-            self.move(x, y)
+        screen = QApplication.primaryScreen().availableGeometry()
+
+        self.final_x = screen.width() - self.width() - 40
+        self.final_y = screen.height() - self.height() - 40
+
+        # Start off-screen to the left
+        self.move(-self.width(), self.final_y)
 
         self.drag_position = QPoint()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_position = (
-                event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+                event.globalPosition().toPoint()
+                - self.frameGeometry().topLeft()
             )
 
     def mouseMoveEvent(self, event):
         if event.buttons() & Qt.MouseButton.LeftButton:
             self.move(
-                event.globalPosition().toPoint() - self.drag_position
+                event.globalPosition().toPoint()
+                - self.drag_position
             )
+
+    def walk_in(self):
+        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation.setDuration(1800)
+        self.animation.setStartValue(self.pos())
+        self.animation.setEndValue(
+            QPoint(self.final_x, self.final_y)
+        )
+        self.animation.start()
+
+    def walk_out(self):
+        screen = QApplication.primaryScreen().availableGeometry()
+
+        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation.setDuration(1800)
+        self.animation.setStartValue(self.pos())
+        self.animation.setEndValue(
+            QPoint(screen.width() + self.width(), self.final_y)
+        )
+        self.animation.start()
