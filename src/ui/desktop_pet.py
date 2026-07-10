@@ -1,9 +1,10 @@
-from PySide6.QtCore import Qt, QPoint, QPropertyAnimation
-from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication, QLabel, QWidget
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QMovie
+from PySide6.QtWidgets import QWidget, QLabel, QApplication
 
 
 class DesktopPet(QWidget):
+
     def __init__(self):
         super().__init__()
 
@@ -16,66 +17,112 @@ class DesktopPet(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.label = QLabel(self)
+        self.label.setStyleSheet("background: transparent;")
 
-        pixmap = QPixmap("assets/sprites/character.png")
+        self.movie = QMovie("assets/videos/water_reminder.gif")
 
-        if pixmap.isNull():
+        self.movie.setCacheMode(QMovie.CacheAll)
+
+        self.movie.setSpeed(100)
+
+        if not self.movie.isValid():
             raise FileNotFoundError(
-                "Couldn't load assets/sprites/character.png"
+                "Could not load assets/videos/water_reminder.gif"
             )
 
-        pixmap = pixmap.scaled(
-            220,
-            220,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
+        # Scale the GIF while keeping aspect ratio.
+        # Increase these values if you want AquaSakhi larger.
+        self.movie.setScaledSize(self.movie.scaledSize())
 
-        self.label.setPixmap(pixmap)
-        self.label.adjustSize()
+        self.label.setMovie(self.movie)
 
-        self.resize(self.label.size())
-
-        screen = QApplication.primaryScreen().availableGeometry()
-
-        self.final_x = screen.width() - self.width() - 40
-        self.final_y = screen.height() - self.height() - 40
-
-        # Start off-screen to the left
-        self.move(-self.width(), self.final_y)
+        self.movie.frameChanged.connect(self._frame_changed)
 
         self.drag_position = QPoint()
 
+        self.resize(320, 320)
+
+        self.label.resize(self.size())
+
+        self.move_to_bottom_right()
+
+        self.hide()
+
+    def play_animation(self):
+        """Show AquaSakhi and play the GIF from the beginning."""
+
+        self.show()
+
+        self.raise_()
+
+        self.movie.stop()
+
+        self.movie.start()
+
+
+    def stop_animation(self):
+        """Hide AquaSakhi after the reminder."""
+
+        self.movie.stop()
+
+        self.hide()
+
+
+    def _frame_changed(self, frame_number):
+        """Resize window to match GIF size."""
+
+        pixmap = self.movie.currentPixmap()
+
+        if pixmap.isNull():
+            return
+
+        self.label.setPixmap(pixmap)
+
+        self.label.resize(pixmap.size())
+
+        self.resize(pixmap.size())
+
+
     def mousePressEvent(self, event):
+
         if event.button() == Qt.MouseButton.LeftButton:
+
             self.drag_position = (
                 event.globalPosition().toPoint()
                 - self.frameGeometry().topLeft()
             )
 
+
     def mouseMoveEvent(self, event):
+
         if event.buttons() & Qt.MouseButton.LeftButton:
+
             self.move(
                 event.globalPosition().toPoint()
                 - self.drag_position
             )
 
-    def walk_in(self):
-        self.animation = QPropertyAnimation(self, b"pos")
-        self.animation.setDuration(1800)
-        self.animation.setStartValue(self.pos())
-        self.animation.setEndValue(
-            QPoint(self.final_x, self.final_y)
-        )
-        self.animation.start()
 
-    def walk_out(self):
+    def move_to_bottom_right(self):
+
         screen = QApplication.primaryScreen().availableGeometry()
 
-        self.animation = QPropertyAnimation(self, b"pos")
-        self.animation.setDuration(1800)
-        self.animation.setStartValue(self.pos())
-        self.animation.setEndValue(
-            QPoint(screen.width() + self.width(), self.final_y)
-        )
-        self.animation.start()
+        x = screen.width() - self.width() - 40
+
+        y = screen.height() - self.height() - 40
+
+        self.move(x, y)
+
+
+    def resizeEvent(self, event):
+
+        super().resizeEvent(event)
+
+        self.label.resize(self.size())
+
+
+    def closeEvent(self, event):
+
+        self.movie.stop()
+
+        super().closeEvent(event)
