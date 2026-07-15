@@ -19,4 +19,5 @@ A cute desktop water companion that reminds you to stay hydrated.
 
 ## License
 
+## run with python main.py
 MIT
