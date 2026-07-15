@@ -1,13 +1,60 @@
-from dataclasses import dataclass
+import json
+import os
 
 
-@dataclass
 class Settings:
-    reminder_interval: int = 60
-    snooze_time: int = 10
-    volume: float = 0.5
-    character_scale: float = 1.0
-    animation_speed: float = 1.0
 
+    FILE = "settings.json"
 
-settings = Settings()
+    DEFAULT = {
+        "interval": 30,
+        "sound": True,
+    }
+
+    def __init__(self):
+
+        if not os.path.exists(self.FILE):
+
+            self.save(self.DEFAULT)
+
+    def load(self):
+
+        try:
+
+            with open(self.FILE, "r") as file:
+
+                return json.load(file)
+
+        except Exception:
+
+            return self.DEFAULT.copy()
+
+    def save(self, data):
+
+        with open(self.FILE, "w") as file:
+
+            json.dump(data, file, indent=4)
+
+    def get_interval(self):
+
+        return self.load()["interval"]
+
+    def set_interval(self, minutes):
+
+        data = self.load()
+
+        data["interval"] = minutes
+
+        self.save(data)
+
+    def get_sound(self):
+
+        return self.load()["sound"]
+
+    def set_sound(self, enabled):
+
+        data = self.load()
+
+        data["sound"] = enabled
+
+        self.save(data)

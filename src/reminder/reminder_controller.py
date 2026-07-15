@@ -2,6 +2,8 @@ from PySide6.QtCore import QObject, QTimer
 
 from src.widgets.reminder_widget import ReminderWidget
 
+from src.config.settings import Settings
+
 
 class ReminderController(QObject):
 
@@ -11,6 +13,15 @@ class ReminderController(QObject):
         self.pet = pet
 
         self.widget = ReminderWidget()
+        self.settings = Settings()
+
+        self.pet.settings_window.settings_changed.connect(
+            self.update_interval
+        )
+        self.pet.reminder_widget = self.widget
+
+        self.pet.bubble_callback = self.position_bubble
+
         self.widget.hide()
 
         self.widget.drank_water.connect(self.on_drank)
@@ -19,18 +30,17 @@ class ReminderController(QObject):
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)   # IMPORTANT
 
-        # Development: 30 seconds
-        self.normal_interval = 30000
-        self.snooze_interval = 10000
+        
 
         self.timer.timeout.connect(self.start_reminder)
 
-        self.timer.start(self.normal_interval)
+        # Show the first reminder immediately
+        QTimer.singleShot(500, self.start_reminder)
 
     def start_reminder(self):
 
-        # Stop timer while reminder is active
-        self.timer.stop()
+        if self.widget.isVisible():
+            return
 
         self.pet.play_animation()
 
@@ -39,15 +49,18 @@ class ReminderController(QObject):
 
     def show_bubble(self):
 
-        self.widget.adjustSize()
-
-        x = self.pet.x() - self.widget.width() - 20
-        y = self.pet.y() + 20
-
-        self.widget.move(x, y)
+        self.position_bubble()
 
         self.widget.show()
+
         self.widget.raise_()
+
+    def update_interval(self, minutes):
+
+        # Restart the timer immediately with the new interval
+        self.timer.stop()
+
+        self.timer.start(minutes * 60 * 1000)
 
     def on_drank(self):
 
@@ -55,8 +68,11 @@ class ReminderController(QObject):
 
         self.pet.stop_animation()
 
-        # Start a NEW reminder cycle
-        self.timer.start(self.normal_interval)
+        self.timer.stop()
+
+        self.timer.start(
+            self.get_normal_interval()
+        )
 
     def on_snooze(self):
 
@@ -64,5 +80,33 @@ class ReminderController(QObject):
 
         self.pet.stop_animation()
 
-        # Snooze
-        self.timer.start(self.snooze_interval)
+        self.timer.stop()
+
+        self.timer.start(
+            self.get_snooze_interval()
+        )
+
+    def get_normal_interval(self):
+
+        minutes = self.settings.get_interval()
+
+        return minutes * 60 * 1000
+
+
+    def get_snooze_interval(self):
+
+        return 10 * 60 * 1000
+    
+    def position_bubble(self):
+
+        self.widget.adjustSize()
+
+        x = self.pet.x() - self.widget.width() - 10
+
+        y = self.pet.y() + 25
+
+        self.widget.move(x, y)
+
+
+
+    

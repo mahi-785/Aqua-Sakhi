@@ -1,5 +1,4 @@
 {
-    "interval": 60,
-    "sound": true,
-    "startup": false
-  }
+    "interval": 5,
+    "sound": true
+}
