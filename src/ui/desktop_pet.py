@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QSize
 from PySide6.QtGui import QMovie
 from PySide6.QtWidgets import QWidget, QLabel, QApplication
 
@@ -20,6 +20,10 @@ class DesktopPet(QWidget):
         self.label.setStyleSheet("background: transparent;")
 
         self.movie = QMovie("assets/videos/water_reminder.gif")
+
+        
+
+        self.movie.setScaledSize(QSize(220, 220))
 
         self.movie.setCacheMode(QMovie.CacheAll)
 
@@ -68,19 +72,29 @@ class DesktopPet(QWidget):
         self.hide()
 
 
-    def _frame_changed(self, frame_number):
-        """Resize window to match GIF size."""
+    def _frame_changed(self, frame):
+
+        if frame == self.movie.frameCount() - 1:
+
+            self.movie.setPaused(True)
 
         pixmap = self.movie.currentPixmap()
 
         if pixmap.isNull():
             return
 
-        self.label.setPixmap(pixmap)
+        scaled = pixmap.scaled(
+            500,
+            260,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        )
 
-        self.label.resize(pixmap.size())
+        self.label.setPixmap(scaled)
 
-        self.resize(pixmap.size())
+        self.label.resize(scaled.size())
+
+        self.resize(scaled.size())
 
 
     def mousePressEvent(self, event):

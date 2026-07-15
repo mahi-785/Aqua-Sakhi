@@ -11,28 +11,35 @@ class ReminderController(QObject):
         self.pet = pet
 
         self.widget = ReminderWidget()
+        self.widget.hide()
 
         self.widget.drank_water.connect(self.on_drank)
         self.widget.snoozed.connect(self.on_snooze)
 
-        self.timer = QTimer()
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)   # IMPORTANT
 
         # Development: 30 seconds
-        self.timer.setInterval(30000)
+        self.normal_interval = 30000
+        self.snooze_interval = 10000
 
         self.timer.timeout.connect(self.start_reminder)
 
-        self.timer.start()
+        self.timer.start(self.normal_interval)
 
     def start_reminder(self):
 
-        # Play the animation
+        # Stop timer while reminder is active
+        self.timer.stop()
+
         self.pet.play_animation()
 
-        # Show reminder after 8 seconds
-        QTimer.singleShot(8000, self.show_bubble)
+        # Show speech bubble after 7 seconds
+        QTimer.singleShot(7000, self.show_bubble)
 
     def show_bubble(self):
+
+        self.widget.adjustSize()
 
         x = self.pet.x() - self.widget.width() - 20
         y = self.pet.y() + 20
@@ -40,6 +47,7 @@ class ReminderController(QObject):
         self.widget.move(x, y)
 
         self.widget.show()
+        self.widget.raise_()
 
     def on_drank(self):
 
@@ -47,7 +55,8 @@ class ReminderController(QObject):
 
         self.pet.stop_animation()
 
-        self.timer.start(30000)
+        # Start a NEW reminder cycle
+        self.timer.start(self.normal_interval)
 
     def on_snooze(self):
 
@@ -55,4 +64,5 @@ class ReminderController(QObject):
 
         self.pet.stop_animation()
 
-        self.timer.start(10000)
+        # Snooze
+        self.timer.start(self.snooze_interval)
